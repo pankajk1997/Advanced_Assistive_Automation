@@ -16,7 +16,7 @@ i=1
 echo $i > $INC_FILE
 newsflag=0
 echo $newsflag > $FLAG_FILE
-echo 00 > $SWITCH_FILE
+printf 00 > $SWITCH_FILE
 echo "" > $ORIG_FILE
 echo "ClipData { text/plain \"Copied Text\" {T:} }" > $INPUT_FILE
 j=".ogg"
@@ -48,6 +48,20 @@ do
 
 echo "0" > $CMDFLAG_FILE
 clipboard=$x$wd
+
+if [[ "$clipboard" == *start* && "$clipboard" == *program* ]]
+then
+echo 1 > $CMDFLAG_FILE
+pkill aplay
+pkill ogg123
+pkill python
+pkill python3
+pkill loop.py
+python /home/pi/Documents/HAP/loop.py &
+clipboard=${clipboard/*start/}
+clipboard=${clipboard/*program/}
+echo $clipboard > $CLIP_FILE
+fi &
 
 if [[ "$clipboard" == *stop* && "$clipboard" == *music* ]]
 then
@@ -150,7 +164,7 @@ pico2wave -w speaking.wav "I have unlocked the doors for you"
 aplay speaking.wav
 rm speaking.wav
 echo 1 > $CMDFLAG_FILE
-echo 1 > $UNLOCK_FILE
+printf 1 > $UNLOCK_FILE
 clipboard=${clipboard/*unlock/}
 echo $clipboard > $CLIP_FILE
 elif [[ "$clipboard" == *lock* ]]
@@ -160,7 +174,7 @@ pico2wave -w speaking.wav "I have locked the doors for you"
 aplay speaking.wav
 rm speaking.wav
 echo 1 > $CMDFLAG_FILE
-echo 0 > $UNLOCK_FILE
+printf 0 > $UNLOCK_FILE
 clipboard=${clipboard/*lock/}
 echo $clipboard > $CLIP_FILE
 fi &
@@ -169,12 +183,12 @@ if [[ "$clipboard" == *first* && "$clipboard" == *switch* ]]||[[ "$clipboard" ==
 then
 echo 1 > $CMDFLAG_FILE
 r=$(head -c 1 $SWITCH_FILE)
-s=$(tail -c 2 $SWITCH_FILE)
+s=$(tail -c 1 $SWITCH_FILE)
 if ((r==0))
 then
-echo 1$s > $SWITCH_FILE
+printf 1$s > $SWITCH_FILE
 else
-echo 0$s > $SWITCH_FILE
+printf 0$s > $SWITCH_FILE
 fi &
 pkill ogg123
 pico2wave -w speaking.wav "I have switched first appliance for you"
@@ -188,12 +202,12 @@ elif [[ "$clipboard" == *second* && "$clipboard" == *switch* ]]||[[ "$clipboard"
 then
 echo 1 > $CMDFLAG_FILE
 r=$(head -c 1 $SWITCH_FILE)
-s=$(tail -c 2 $SWITCH_FILE)
+s=$(tail -c 1 $SWITCH_FILE)
 if ((s==0))
 then
-echo $r'1' > $SWITCH_FILE
+printf $r'1' > $SWITCH_FILE
 else
-echo $r'0' > $SWITCH_FILE
+printf $r'0' > $SWITCH_FILE
 fi &
 pkill ogg123
 pico2wave -w speaking.wav "I have switched second appliance for you"
@@ -209,7 +223,7 @@ if [[ "$clipboard" == *develop* ]]||[[ "$clipboard" == *yourself* ]]
 then
 echo 1 > $CMDFLAG_FILE
 pkill ogg123
-pico2wave -w speaking.wav "I am your Behan. I am the mastercontrol of everything, connected to electricity, in this industry, but yet, I am your assistant. I was originally developed by Pankaj, Deepak and Ashwinder, for their final year project. My purpose is to help disabled, or differently abled people, get there work done, with voice commands, provide productivity, by automating repetitive tasks, and also increase laziness."
+pico2wave -w speaking.wav "I am your Behan. I am the control center of all electrical appliances, in this industry, but yet, I am your assistant. I was originally developed by Pankaj, Ashwinder, Balpreet and Deepak, for their final year project. My purpose is to help disabled, or elderly people, get there work done, with voice commands, provide productivity, by automating tasks, and also increase laziness."
 aplay speaking.wav
 rm speaking.wav
 clipboard=${clipboard/*develop/}

@@ -13,26 +13,28 @@ GPIO.setup(12,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)  #Gas Sensor
 #Relay
 GPIO.setup(37,GPIO.OUT) #Red Alarm Bulb
 GPIO.setup(35,GPIO.OUT) #White Normal Bulb
+GPIO.setup(33,GPIO.OUT) #First Switch
+GPIO.setup(31,GPIO.OUT) #Second Switch
 
 #Servo
 GPIO.setup(40,GPIO.OUT)
 GPIO.setup(38,GPIO.OUT)
 
 #Keypad Columns
-GPIO.setup(22,GPIO.OUT)
-GPIO.setup(18,GPIO.OUT)
-GPIO.setup(16,GPIO.OUT)
+GPIO.setup(36,GPIO.OUT)         #36 - 22
+GPIO.setup(32,GPIO.OUT)         #32 - 18
+GPIO.setup(26,GPIO.OUT)         #26 - 16
 
 #Keypad Rows
-GPIO.setup(36,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(32,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(26,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(24,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(24,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)       #24 - 36
+GPIO.setup(22,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)       #22 - 32
+GPIO.setup(18,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)       #18 - 26
+GPIO.setup(16,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)       #16 - 24
 
 #Initializing Keypad Columns
-GPIO.output(22,GPIO.LOW)
-GPIO.output(18,GPIO.LOW)
-GPIO.output(16,GPIO.LOW)
+GPIO.output(36,GPIO.LOW)        #36 - 22
+GPIO.output(32,GPIO.LOW)        #32 - 18
+GPIO.output(26,GPIO.LOW)        #26 - 16
 
 #Initializing Relay
 GPIO.output(37,GPIO.LOW)
@@ -44,13 +46,11 @@ pwm2=GPIO.PWM(38,50)
 pwm1.start(7.5)
 pwm2.start(7.5)
 
-i=0         ##Just an incrementer
-chkalrm='0'     ##No 'alarm' in beggining
-unlock='0'      ##Locked in beggining
+i=0                 #Just an incrementer
+chkalrm='0'         #No 'alarm' in beggining
+unlock='0'          #Doors locked in beggining
 passorig=[2,0,1,8]  #Original Password
-passcode=[0,0,0,0]  ##To store input password from keypad
-prevpass=passcode   ##To prevent duplicate fast input when keypad pressed
-prevlok=0   ##To check unlock change
+passcode=[0,0,0,0]  #To store input password from keypad
 
 #Writing '0' to 'unlock' and 'alarm' file
 with open('/home/pi/Documents/HAP/unlock.txt','w') as f1:
@@ -66,105 +66,144 @@ while(True):
         unlock=f3.read()
 
     #Choosing different type of alarm(chkalrm) to be written in 'alarm' file
-    if(GPIO.input(8)):
-        chkalrm='1' #Choose '1' in case of fire sensed
-    elif unlock=='0':
-        if(GPIO.input(10)):
-            chkalrm='2' #Choose '2' in case of motion sensed when locked
-    elif(GPIO.input(12)):
-        chkalrm='3' #Choose '3' in case of gas sensed
-    else:       #Take password input from keypad when no alarm triggered
-        #Taking input from 4x3 keypad
-        GPIO.output(22,GPIO.HIGH)
-        if(GPIO.input(36)):
-            passcode[i]=1
-            i+=1
-        elif(GPIO.input(32)):
-            passcode[i]=4
-            i+=1
-        elif(GPIO.input(26)):
-            passcode[i]=7
-            i+=1
-        GPIO.output(22,GPIO.LOW)
+    if chkalrm=='0':
 
-        GPIO.output(18,GPIO.HIGH)
-        if(GPIO.input(36)):
-            passcode[i]=2
-            i+=1
-        elif(GPIO.input(32)):
-            passcode[i]=5
-            i+=1
-        elif(GPIO.input(26)):
-            passcode[i]=8
-            i+=1
-        elif(GPIO.input(24)):
-            passcode[i]=0
-            i+=1
-        GPIO.output(18,GPIO.LOW)
+        GPIO.output(37,GPIO.LOW)    #Switch OFF red bulb when no alarm
 
-        GPIO.output(16,GPIO.HIGH)
-        if(GPIO.input(36)):
-            passcode[i]=3
-            i+=1
-        elif(GPIO.input(32)):
-            passcode[i]=6
-            i+=1
-        elif(GPIO.input(26)):
-            passcode[i]=9
-            i+=1
-        GPIO.output(16,GPIO.LOW)
+        if(GPIO.input(8)):
+            chkalrm='1'             #Choose '1' in case of fire sensed
+        elif unlock=='0':
+            if(GPIO.input(10)):
+                chkalrm='2'         #Choose '2' in case of motion sensed of thief
+        elif(GPIO.input(12)):
+            chkalrm='3'             #Choose '3' in case of gas sensed
 
-        if prevpass!=passcode:  #Prevent duplicate fast input by delay for 1 sec
-            time.sleep(1)
+        with open('/home/pi/Documents/HAP/alarm.txt','w') as f5:
+            f5.write(chkalrm)       #Writing triggered alarm type to file
+    
+    elif chkalrm != '0':
 
-        prevpass=passcode   #Getting ready for next input
+        GPIO.output(37,GPIO.HIGH)   #Switch ON red bulb when alarm
+        call("/home/pi/Documents/HAP/alarm.sh") #Playing Choosen Alarm
 
-    #Out of if-elif-else condition but inside while loop
+        GPIO.output(36,GPIO.HIGH)
+        if(GPIO.input(16)):
+            chkalrm='0'             #Stop alarm when keypress
+            call("/home/pi/Documents/HAP/pkill.sh")    #Stop voice alarm when keypress
+        GPIO.output(36,GPIO.LOW)
 
-    GPIO.output(16,GPIO.HIGH)
-    if(GPIO.input(24)):     #Proceed (after entering password)
-        i=0
-        passcode=[0,0,0,0]
-        if passcode==passorig:
-            unlock='1'      #Unlock when password matched
+        with open('/home/pi/Documents/HAP/alarm.txt','w') as f5:
+            f5.write(chkalrm)       #Writing changes in alarm to file
+
+    if unlock=='1':
+
+        GPIO.output(35,GPIO.HIGH)   #Switch ON White bulb when unlocked
+
+        GPIO.output(26,GPIO.HIGH)
+        if(GPIO.input(16)):
+            unlock='0'              #Lock doors when keypress
+        GPIO.output(26,GPIO.LOW)
+
+        if unlock=='0':
             with open('/home/pi/Documents/HAP/unlock.txt','w') as f4:
-                f4.write(unlock)
-            call("/home/pi/Documents/HAP/unlock.sh")    #Voice feedback of authentication status
-    GPIO.output(16,GPIO.LOW)
+                f4.write(unlock)        #Writing change in lock condition to file
 
-    GPIO.output(22,GPIO.HIGH)
-    if(GPIO.input(24)):     #Stop Alarm
-        chkalrm='0'
-    GPIO.output(22,GPIO.LOW)
+        pwm1.ChangeDutyCycle(2.5)
+        pwm2.ChangeDutyCycle(2.5)
+        print("SERVO OPEN")
 
-    with open('/home/pi/Documents/HAP/alarm.txt','w') as f5:
-        f5.write(chkalrm)
+    elif unlock=='0':
 
-    if prevlok != unlock:   #Locking and Unlocking Doors with Servo Motors
-        if unlock == '1':
-            pwm1.ChangeDutyCycle(2.5)
-            pwm2.ChangeDutyCycle(2.5)
+        GPIO.output(35,GPIO.LOW)    #Switch OFF White bulb when locked
+
+        #Taking input from 4x3 keypad
+        GPIO.output(36,GPIO.HIGH)
+        if(GPIO.input(24)):
+            sleep(0.1)
+            if(GPIO.input(24)):
+                passcode[i]=1
+                i+=1
+        elif(GPIO.input(22)):
+            sleep(0.1)
+            if(GPIO.input(22)):
+                passcode[i]=4
+                i+=1
+        elif(GPIO.input(18)):
+            sleep(0.1)
+            if(GPIO.input(18)):
+                passcode[i]=7
+                i+=1
+        GPIO.output(36,GPIO.LOW)
+
+        GPIO.output(32,GPIO.HIGH)
+        if(GPIO.input(24)):
+            sleep(0.1)
+            if(GPIO.input(24)):
+                passcode[i]=2
+                i+=1
+        elif(GPIO.input(22)):
+            sleep(0.1)
+            if(GPIO.input(22)):
+                passcode[i]=5
+                i+=1
+        elif(GPIO.input(18)):
+            sleep(0.1)
+            if(GPIO.input(18)):
+                passcode[i]=8
+                i+=1
+        elif(GPIO.input(16)):
+            sleep(0.1)
+            if(GPIO.input(16)):
+                passcode[i]=0
+                i+=1
+        GPIO.output(32,GPIO.LOW)
+
+        GPIO.output(26,GPIO.HIGH)
+        if(GPIO.input(24)):
+            sleep(0.1)
+            if(GPIO.input(24)):
+                passcode[i]=3
+                i+=1
+        elif(GPIO.input(22)):
+            sleep(0.1)
+            if(GPIO.input(22)):
+                passcode[i]=6
+                i+=1
+        elif(GPIO.input(18)):
+            sleep(0.1)
+            if(GPIO.input(18)):
+                passcode[i]=9
+                i+=1
+        GPIO.output(26,GPIO.LOW)
+
+        if((i>3)):                  #Proceed (after entering 4 digit password)
+            i=0                     #Restart password input
+            if passcode==passorig:
+                unlock='1'          #Unlock when password matched
+                with open('/home/pi/Documents/HAP/unlock.txt','w') as f4:
+                    f4.write(unlock)
+            call("/home/pi/Documents/HAP/unlock.sh") #Voice feedback of authentication status
             sleep(2)
-            GPIO.output(40,GPIO.LOW)
-            GPIO.output(38,GPIO.LOW)
-        else:
-            pwm1.ChangeDutyCycle(7.5)
-            pwm2.ChangeDutyCycle(7.5)
-            sleep(2)
-            GPIO.output(40,GPIO.LOW)
-            GPIO.output(38,GPIO.LOW)
 
-    prevlok=unlock
+        pwm1.ChangeDutyCycle(7.5)
+        pwm2.ChangeDutyCycle(7.5)
+        print("SERVO CLOSE")
 
-    if chkalrm != '0':
-        GPIO.output(35,GPIO.HIGH)   #Switch ON red bulb when alarm
-    else:
-        GPIO.output(35,GPIO.LOW)
+        #For Debugging
+        print(passcode)
+        print(chkalrm)
+        print(unlock)
+        print(i)
 
-    if unlock == '1':
-        GPIO.output(37,GPIO.HIGH)   #Switch ON White bulb when unlocked
-    else:
-        GPIO.output(37,GPIO.LOW)
+    with open('/home/pi/Documents/HAP/switch.txt','r') as f6:
+        switch=f6.read()
 
-    #Executing alarm based on content of 'alarm' file
-    call("/home/pi/Documents/HAP/alarm.sh")
+    if switch[0]=='0':
+        GPIO.output(33,GPIO.LOW)
+    elif switch[0]=='1':
+        GPIO.output(33,GPIO.HIGH)
+
+    if switch[1]=='0':
+        GPIO.output(31,GPIO.LOW)
+    elif switch[1]=='1':
+        GPIO.output(31,GPIO.HIGH)

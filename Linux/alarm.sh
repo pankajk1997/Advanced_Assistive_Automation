@@ -23,4 +23,4 @@ aplay ~/Music/gas.wav &			#Similarly Play Gas Alarm
 fi &
 else
 pkill aplay	#Kill aplay service
-fi
+fi &

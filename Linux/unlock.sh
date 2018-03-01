@@ -7,7 +7,7 @@ if [ "$count" == "1" ]	#If file content is "1"
 then
 if ! pgrep -x "aplay" > /dev/null	#If "aplay" service not already running
 then					#If another alarm is not ON already
-pico2wave -w speaking.wav "Welcome"			#Correct Password
+pico2wave -w speaking.wav "Password Matched, Welcome!"			#Correct Password
 aplay speaking.wav
 rm speaking.wav			#Give Authentication status as voice feedback
 fi &
