@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     EditText e1;
     Button b1,b2,b3;
-    TextView t1,t2;
+    TextView t1;
     Activity activity = this;
     static int flag=2,time=3000;
     static ClipData clip=null;
@@ -37,7 +37,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         e1 = (EditText) findViewById(R.id.editText);
         t1 = (TextView) findViewById(R.id.textView);
-        t2 = (TextView) findViewById(R.id.textView3);
         b1 = (Button) findViewById(R.id.button1);
         b2 = (Button) findViewById(R.id.button2);
         b3 = (Button) findViewById(R.id.button3);
@@ -149,7 +148,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     channelSsh.connect();
                     channelSsh.disconnect();
 
-                    t2.setText(output);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
