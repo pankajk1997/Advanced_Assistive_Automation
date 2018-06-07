@@ -4,7 +4,8 @@ CLIP_FILE=clipfile.txt
 INC_FILE=incrementer.txt 	
 FLAG_FILE=newsflag.txt
 CMDFLAG_FILE=cmdflag.txt
-SWITCH_FILE=switch.txt
+SWITCH_FILE1=switch1.txt
+SWITCH_FILE2=switch2.txt
 UNLOCK_FILE=unlock.txt
 ORIG_FILE=origclip.txt
 INPUT_FILE=input.txt
@@ -16,7 +17,8 @@ i=1
 echo $i > $INC_FILE
 newsflag=0
 echo $newsflag > $FLAG_FILE
-printf 00 > $SWITCH_FILE
+printf 0 > $SWITCH_FILE1
+printf 0 > $SWITCH_FILE2
 echo "" > $ORIG_FILE
 echo "ClipData { text/plain \"Copied Text\" {T:} }" > $INPUT_FILE
 j=".ogg"
@@ -52,6 +54,9 @@ clipboard=$x$wd
 if [[ "$clipboard" == *start* && "$clipboard" == *program* ]]
 then
 echo 1 > $CMDFLAG_FILE
+pico2wave -w speaking.wav "Core Program have been initiated"
+aplay speaking.wav
+rm speaking.wav
 pkill aplay
 pkill ogg123
 pkill python
@@ -182,13 +187,12 @@ fi &
 if [[ "$clipboard" == *first* && "$clipboard" == *switch* ]]||[[ "$clipboard" == *1st* && "$clipboard" == *switch* ]]
 then
 echo 1 > $CMDFLAG_FILE
-r=$(head -c 1 $SWITCH_FILE)
-s=$(tail -c 1 $SWITCH_FILE)
+r=$(head -c 1 $SWITCH_FILE1)
 if ((r==0))
 then
-printf 1$s > $SWITCH_FILE
+printf 1 > $SWITCH_FILE1
 else
-printf 0$s > $SWITCH_FILE
+printf 0 > $SWITCH_FILE1
 fi &
 pkill ogg123
 pico2wave -w speaking.wav "I have switched first appliance for you"
@@ -201,13 +205,12 @@ echo $clipboard > $CLIP_FILE
 elif [[ "$clipboard" == *second* && "$clipboard" == *switch* ]]||[[ "$clipboard" == *2nd* && "$clipboard" == *switch* ]]
 then
 echo 1 > $CMDFLAG_FILE
-r=$(head -c 1 $SWITCH_FILE)
-s=$(tail -c 1 $SWITCH_FILE)
+s=$(head -c 1 $SWITCH_FILE2)
 if ((s==0))
 then
-printf $r'1' > $SWITCH_FILE
+printf 1 > $SWITCH_FILE2
 else
-printf $r'0' > $SWITCH_FILE
+printf 0 > $SWITCH_FILE2
 fi &
 pkill ogg123
 pico2wave -w speaking.wav "I have switched second appliance for you"

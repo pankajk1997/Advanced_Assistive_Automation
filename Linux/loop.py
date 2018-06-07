@@ -1,6 +1,7 @@
 from time import sleep
 from subprocess import call
 import RPi.GPIO as GPIO
+import pigpio
 
 #Note the BOARD Mode
 GPIO.setmode(GPIO.BOARD)
@@ -41,10 +42,13 @@ GPIO.output(37,GPIO.LOW)
 GPIO.output(35,GPIO.LOW)
 
 #Initializing Servo PWM
-pwm1=GPIO.PWM(40,50)
-pwm2=GPIO.PWM(38,50)
-pwm1.start(7.5)
-pwm2.start(7.5)
+servo1=21
+servo2=20
+
+pi = pigpio.pi()
+
+pi.set_servo_pulsewidth(servo1, 1500)
+pi.set_servo_pulsewidth(servo2, 1500)
 
 i=0                 #Just an incrementer
 chkalrm='0'         #No 'alarm' in beggining
@@ -108,8 +112,8 @@ while(True):
             with open('/home/pi/Documents/HAP/unlock.txt','w') as f4:
                 f4.write(unlock)        #Writing change in lock condition to file
 
-        pwm1.ChangeDutyCycle(2.5)
-        pwm2.ChangeDutyCycle(2.5)
+        pi.set_servo_pulsewidth(servo1, 500)
+        pi.set_servo_pulsewidth(servo2, 500)
         print("SERVO OPEN")
 
     elif unlock=='0':
@@ -185,8 +189,8 @@ while(True):
             call("/home/pi/Documents/HAP/unlock.sh") #Voice feedback of authentication status
             sleep(2)
 
-        pwm1.ChangeDutyCycle(7.5)
-        pwm2.ChangeDutyCycle(7.5)
+        pi.set_servo_pulsewidth(servo1, 1500)
+        pi.set_servo_pulsewidth(servo2, 1500)
         print("SERVO CLOSE")
 
         #For Debugging
@@ -195,15 +199,17 @@ while(True):
         print(unlock)
         print(i)
 
-    with open('/home/pi/Documents/HAP/switch.txt','r') as f6:
-        switch=f6.read()
+    with open('/home/pi/Documents/HAP/switch1.txt','r') as f6:
+        switch1=f6.read()
+    with open('/home/pi/Documents/HAP/switch2.txt','r') as f7:
+        switch2=f7.read()
 
-    if switch[0]=='0':
+    if switch1=='0':
         GPIO.output(33,GPIO.LOW)
-    elif switch[0]=='1':
+    elif switch1=='1':
         GPIO.output(33,GPIO.HIGH)
 
-    if switch[1]=='0':
+    if switch2=='0':
         GPIO.output(31,GPIO.LOW)
-    elif switch[1]=='1':
+    elif switch2=='1':
         GPIO.output(31,GPIO.HIGH)
